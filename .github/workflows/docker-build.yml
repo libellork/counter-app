@@ -1,0 +1,33 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 코드 가져오기
+        uses: actions/checkout@v4
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.libellork }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: 이미지 빌드 및 push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: libellork/counter-app:${{ github.sha }}
+
+      - name: Docker Scout로 취약점 검사
+        uses: docker/scout-action@v1
+        with:
+          command: cves
+          image: libellork/counter-app:${{ github.sha }}
+          only-severity: critical,high
+          exit-code: true
